@@ -1,0 +1,31 @@
+server:
+  port: 8085
+spring:
+  datasource:
+    druid:
+      url: jdbc:mysql://localhost:3306/newiot?useUnicode=true&characterEncoding=utf8&serverTimezone=Hongkong&allowMultiQueries=true&useSSL=true&verifyServerCertificate=false
+      username: root
+      password: 1qaz@WSX
+      driver-class-name: com.mysql.jdbc.Driver
+      filters: stat
+      maxActive: 200
+      initialSize: 10
+      maxWait: 60000
+      minIdle: 20
+      timeBetweenEvictionRunsMillis: 60000
+      minEvictableIdleTimeMillis: 300000
+      validationQuery: "select 1"
+      testWhileIdle: true
+      maxOpenPreparedStatements: 20
+      testOnBorrow: false
+      testOnReturn: false
+      poolPreparedStatements: true
+      useGlobalDataSourceStat: true
+
+#EMQ服务器地址
+pushService:
+  host: tcp://localhost:1883
+  userName: admin
+  passWord: public
+  monitor: http://localhost:18083
+  maxInflight: 100

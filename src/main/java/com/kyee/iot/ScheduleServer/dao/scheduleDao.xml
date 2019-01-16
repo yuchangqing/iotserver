@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace = "com.kyee.iot.ScheduleServer.dao.scheduleDao">
+    <resultMap id="getHomeOrder" type="com.kyee.iot.ScheduleServer.domain.scheduleHomeDomain">
+        <result column="time" property="time"/>
+        <collection property="typeDomains" ofType="com.kyee.iot.ScheduleServer.domain.scheduleTypeDomain" >
+            <result column="orderClass" property="orderClass"/>
+            <result column="startTime" property="startTime"/>
+            <result column="endTime" property="endTime"/>
+        </collection>
+    </resultMap>
+    <select id="scheduleHome" resultMap="getHomeOrder">
+        select date_format(startTime, '%Y-%m-%d') as time, orderClass,startTime,endTime from orders_info where patId = #{patId} and startTime like "%"#{dateTime}"%"
+    </select>
+    <resultMap id="getHomeOrder2" type="com.kyee.iot.ScheduleServer.domain.scheduleHomeDomain">
+        <result column="time" property="time"/>
+        <collection property="typeDomains" ofType="com.kyee.iot.ScheduleServer.domain.scheduleTypeDomain" >
+            <result column="orderClass" property="orderClass"/>
+            <result column="startTime" property="startTime"/>
+            <result column="endTime" property="endTime"/>
+            <result column="orderText" property="orderText"/>
+        </collection>
+    </resultMap>
+    <select id="scheduleDetailed" resultMap="getHomeOrder2">
+        select date_format(startTime, '%Y-%m-%d') as time,orderClass,startTime,endTime,orderText from orders_info where patId = #{patId} and startTime like "%"#{dateTime}"%"
+
+    </select>
+</mapper>

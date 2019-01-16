@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kyee.iot.common.dao.IMsgPushCommonDao">
+    <!--更新消息状态-->
+    <update id="updateMsgStatus">
+        UPDATE message_records
+        SET status = #{status},
+        updateTime = now()
+        WHERE messageId = #{messageId}
+        AND
+        (
+            (
+                patId = #{patientId}
+                <if test="visitId !=null">
+                    AND visitId = #{visitId}
+                </if>
+            )
+            <!-- 第三方消息可能推送的床位和患者不一致,所以第三方消息要允许只根据messageId更新消息状态 -->
+            OR
+            (
+                messageType = 'thirdPartyMessage'
+            )
+        )
+    </update>
+
+    <insert id="saveMsgRecord" parameterType="com.kyee.iot.common.emqMessage.PushMessage">
+        INSERT INTO message_records
+        (messageId,patId,visitId,wardNo,status,sendTime,updateTime,messageBody,flag,messageType)
+        VALUES
+        (
+        #{messageInfo.messageId},
+        #{messageInfo.patId},
+        #{messageInfo.visitId},
+        #{messageInfo.wardNo},
+        0,
+        #{messageInfo.sendTime},
+        #{messageInfo.sendTime},
+        #{messageInfo.message},
+        0,
+        #{messageInfo.messageType}
+        )
+    </insert>
+
+    <select id="queryRecievedResult" resultType="com.kyee.iot.common.emqMessage.QuickMsgPushResult">
+        SELECT
+        COUNT(*) AS received,
+        (SELECT COUNT(*) FROM message_records WHERE originId = #{originId}) AS total
+        FROM message_records
+        WHERE originId = #{originId} AND status != 0;
+    </select>
+
+    <select id="queryNurseMac" resultType="java.lang.String">
+        SELECT macAddress
+        FROM device_info
+        WHERE devType = 3 AND wardNo = #{wardNo}
+    </select>
+</mapper>

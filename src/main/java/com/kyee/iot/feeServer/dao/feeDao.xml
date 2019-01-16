@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace = "com.kyee.iot.feeServer.dao.feeDao">
+    <resultMap id="getfee" type="com.kyee.iot.feeServer.domain.feeDomain">
+        <result column="patId" property="patId"/>
+        <result column="visited" property="visited"/>
+        <result column="itemId" property="itemId"/>
+        <result column="itemClass" property="itemClass"/>
+        <result column="itemName" property="itemName"/>
+        <result column="itemSpec" property="itemSpec"/>
+        <result column="itemAmount" property="itemAmount"/>
+        <result column="itemCost" property="itemCost"/>
+    </resultMap>
+    <resultMap id="getAllCostFee" type="com.kyee.iot.feeServer.domain.feeAllCostDomain">
+        <result column="patTotalPrepaid" property="patTotalPrepaid"/>
+        <result column="patTotalFee" property="patTotalFee"/>
+    </resultMap>
+
+    <select id="fee" resultMap="getfee">
+        SELECT
+        patId,
+        visited,
+        itemId,
+        itemClass,
+        itemName,
+        itemSpec,
+        itemAmount,
+        itemCost
+        from fee_detail where patId = #{patId}
+    </select>
+
+    <select id="allCostFee" resultMap="getAllCostFee">
+        SELECT
+         patTotalPrepaid,
+         patTotalFee
+         FROM patient_info
+         WHERE patId =#{patId};
+    </select>
+    <resultMap id="getDateFee" type="com.kyee.iot.feeServer.domain.feeDateDomain">
+        <result column="dateTime" property="dateTime"/>
+        <result column="dateFee" property="dateFee"/>
+    </resultMap>
+    <select id="dateFee" resultMap="getDateFee">
+        select a.time as dateTime
+        ,SUM(a.cost) as dateFee
+         from
+         (select DATE_FORMAT(billingData,'%Y-%m-%d') as time, ROUND(SUM(itemCost),2) as cost
+         from fee_detail
+         where patId=#{patId} and billingData
+         LIKE "%"#{dateTime}"%" GROUP BY(fee_detail.billingData)) as a GROUP BY time;
+    </select>
+    <resultMap id="getTypeFee" type="com.kyee.iot.feeServer.domain.feeTypeDomain">
+        <result column="typeDateTime" property="typeDateTime"/>
+        <result column="type" property="type"/>
+        <result column="typeFee" property="typeFee"/>
+    </resultMap>
+    <select id="typeFee" resultMap="getTypeFee">
+        select
+         round(sum(itemCost),2) typeFee,
+         a.typeDateTime,
+         a.itemClass type
+         FROM
+         (SELECT date_format(billingData, '%Y-%m-%d') typeDateTime,itemClass,itemCost FROM fee_detail where patId =#{patId} and billingData like "%"#{dateTime}"%"
+         GROUP BY date_format(billingData, '%Y-%m-%d'),itemClass,itemCost) a
+         group by
+         a.typeDateTime,
+         a.itemClass
+
+    </select>
+
+    <resultMap id="feeDetailed" type="com.kyee.iot.feeServer.domain.feeDetailedDomain">
+        <result column="type" property="type"/>
+        <result column="typeFee" property="typeFee"/>
+        <collection property="feeDetailedListDomains" ofType="com.kyee.iot.feeServer.domain.feeDetailedListDomain">
+            <result column="itemName" property="itemName"/>
+            <result column="itemAmount" property="itemAmount"/>
+            <result column="itemAmount" property="itemAmount"/>
+            <result column="itemCost" property="itemCost"/>
+        </collection>
+    </resultMap>
+    <select id="detailedFee" resultMap="feeDetailed">
+        SELECT
+        newTable.typeFee as typeFee,
+        newTable.type as type,
+        table2.itemName as itemName,
+        table2.itemAmount as itemAmount,
+        table2.itemUnits as itemUnits,
+        table2.itemCost as itemCost
+        FROM
+        (select
+         round(sum(itemCost),2) typeFee,
+         a.typeDateTime,
+         a.itemClass type
+         FROM
+         (SELECT
+         date_format(billingData, '%Y-%m-%d')
+         typeDateTime,
+         itemClass,
+         itemCost
+         FROM
+         fee_detail
+          where
+          patId =#{patId}
+          and
+          billingData LIKE  "%"#{dateTime}"%"
+         GROUP BY date_format(billingData, '%Y-%m-%d'),itemClass,itemCost) a
+         group by
+         a.typeDateTime,
+         a.itemClass) newTable,
+         fee_detail table2
+         where
+         newTable.type = table2.itemClass
+         and
+         table2.patId = #{patId}
+         and table2.billingData like  "%"#{dateTime}"%"
+    </select>
+
+</mapper>
